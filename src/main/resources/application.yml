@@ -1,0 +1,30 @@
+server:
+  # 端口号
+  port: 8080
+spring:
+  datasource:
+    # 数据源
+    # ----------------------------------------------
+    # # postgresql 示例:
+    # driver-class-name: org.postgresql.Driver
+    # url: jdbc:postgresql://127.0.0.1:5432/<数据库名>
+    # username: <用户名>
+    # password: <密码>
+    # ----------------------------------------------
+    # # mysql 示例:
+    # driver-class-name: com.mysql.cj.jdbc.Driver
+    # url: jdbc:mysql://127.0.0.1:3306/<数据库名>?characterEncoding=utf8&useSSL=false&serverTimezone=GMT%2B8
+    # username: <用户名>
+    # password: <密码>
+    # ----------------------------------------------
+    driver-class-name:
+    url:
+    username:
+    password:
+# mybatis 配置
+mybatis:
+  type-aliases-package: com.example.jwt.entity.*
+# jwt 配置
+jwt:
+  secret: 47a0951d-1968-4ba1-a1b7-53f5926dbdc5
+  token-validity: 43200000 # 3600 * 12 * 1000
