@@ -9,4 +9,4 @@ Content-Type: application/json
 
 ###
 GET http://127.0.0.1:8080/api/account/info
-Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhZG1pbiIsImlhdCI6MTY4OTM5MTc0NywiZXhwIjoxNjg5NDM0OTQ3fQ.u1TMMl6oUuZ_lOfsDV6gyAvde7dPY7hXBcJImPVtnis
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJhZG1pbiIsInJvbGVzIjoiVVNFUixBRE1JTiIsImlhdCI6MTY4OTQxODM3NSwiZXhwIjoxNjg5NDYxNTc1fQ.7_eYTsemV760zAcY1Fv1trKwgglm2CjglEcGHo1ViUU

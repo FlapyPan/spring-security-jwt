@@ -1,12 +1,11 @@
 package com.example.jwt.security;
 
+import com.example.jwt.entity.Account;
 import lombok.RequiredArgsConstructor;
 import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -25,7 +24,6 @@ import java.io.IOException;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final TokenManager tokenManager;
-    private final UserDetailsService userDetailsService;
 
     @Override
     protected void doFilterInternal(
@@ -40,22 +38,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
         String token = authHeader.substring(7);
-        // 从 token 中获取用户名
-        String username = tokenManager.getUsernameFromToken(token);
-        if (StringUtils.hasText(username)) {
-            // 从数据库获取用户信息
-            UserDetails userDetails = userDetailsService.loadUserByUsername(username);
-            // 验证 token 有效
-            if (tokenManager.validateJwtToken(token, userDetails)) {
-                // 将认证信息存入 Security 上下文
-                SecurityContext context = SecurityContextHolder.createEmptyContext();
-                UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                        username, null, userDetails.getAuthorities()
-                );
-                authToken.setDetails(userDetails);
-                context.setAuthentication(authToken);
-                SecurityContextHolder.setContext(context);
-            }
+        // 验证 token 有效
+        if (tokenManager.validateJwtToken(token)) {
+            // 获取用户信息
+            Account account = tokenManager.getAccountFromToken(token);
+            // 将认证信息存入 Security 上下文
+            SecurityContext context = SecurityContextHolder.getContext();
+            UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+                    account.getUsername(), null, account.getAuthorities()
+            );
+            authToken.setDetails(account);
+            context.setAuthentication(authToken);
         }
         filterChain.doFilter(request, response);
     }

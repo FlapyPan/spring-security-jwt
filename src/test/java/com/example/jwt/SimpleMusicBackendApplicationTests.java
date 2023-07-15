@@ -22,7 +22,6 @@ class SimpleMusicBackendApplicationTests {
         account.setUsername("admin");
         account.setPassword(passwordEncoder.encode("admin"));
         account.setRoles("USER,ADMIN");
-        account.setEnabled(true);
         accountMapper.insert(account);
     }
 

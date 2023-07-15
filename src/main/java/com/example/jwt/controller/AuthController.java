@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -27,10 +28,11 @@ public class AuthController {
     @PostMapping("/login")
     public String login(@RequestBody @Validated LoginRequest loginRequest) {
         // 注入认证管理器来认证用户名和密码
-        authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(
-                loginRequest.getUsername(), loginRequest.getPassword()));
+        Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(
+                        loginRequest.getUsername(), loginRequest.getPassword()));
         // 生成 token 返回
-        return tokenManager.generateJwtToken(loginRequest.getUsername());
+        return tokenManager.generateJwtToken(authentication);
     }
 
 }

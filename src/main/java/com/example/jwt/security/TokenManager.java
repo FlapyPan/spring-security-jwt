@@ -1,18 +1,19 @@
 package com.example.jwt.security;
 
+import com.example.jwt.entity.Account;
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import java.util.Date;
-import java.util.Objects;
 
 /**
  * Jwt token 管理器
@@ -36,11 +37,20 @@ public class TokenManager {
     /**
      * 生成 JWT Token
      */
-    public String generateJwtToken(String username) {
+    public String generateJwtToken(Authentication authentication) {
+        Claims claims = Jwts.claims();
+        // 将用户信息放入 claims
+        Account account = (Account) authentication.getPrincipal();
+        claims.put("id", account.getId());
+        claims.put("username", account.getUsername());
+        claims.put("email", account.getEmail());
+        claims.put("roles", account.getRoles());
+        // 设置 token 生成时间
+        claims.setIssuedAt(new Date());
+        // 设置 token 过期时间
+        claims.setExpiration(new Date(System.currentTimeMillis() + tokenValidity));
         return Jwts.builder()
-                .setSubject(username) // 用户名存放在 subject
-                .setIssuedAt(new Date()) // 设置 token 生成时间
-                .setExpiration(new Date(System.currentTimeMillis() + tokenValidity)) // 设置 token 过期时间
+                .setClaims(claims)
                 .signWith(key, SignatureAlgorithm.HS256) // 签名密钥
                 .compact();
     }
@@ -48,21 +58,36 @@ public class TokenManager {
     /**
      * 校验 token
      */
-    public boolean validateJwtToken(String token, UserDetails userDetails) {
-        if (!StringUtils.hasText(token) || userDetails == null) return false;
-        Claims claims = getClaimsFromToken(token);
+    public boolean validateJwtToken(String token) {
+        if (!StringUtils.hasText(token)) return false;
+        Claims claims;
+        try {
+            claims = getClaimsFromToken(token);
+        } catch (JwtException e) {
+            return false;
+        }
         // 校验过期时间
-        boolean tokenExpired = claims.getExpiration().before(new Date());
-        if (tokenExpired) return false;
-        // 检查用户名
-        String username = claims.getSubject();
-        return Objects.equals(username, userDetails.getUsername());
+        Date now = new Date();
+        return now.before(claims.getExpiration()) && now.after(claims.getIssuedAt());
+    }
+
+    /**
+     * 从 token 中获取用户信息
+     */
+    public Account getAccountFromToken(String token) {
+        Claims claims = getClaimsFromToken(token);
+        Account account = new Account();
+        account.setId((Integer) claims.get("id"));
+        account.setUsername((String) claims.get("username"));
+        account.setEmail((String) claims.get("email"));
+        account.setRoles((String) claims.get("roles"));
+        return account;
     }
 
     /**
      * 从 token 获取 Claims
      */
-    private Claims getClaimsFromToken(String token) {
+    private Claims getClaimsFromToken(String token) throws JwtException {
         return Jwts.parserBuilder()
                 .setSigningKey(key)
                 .build()
@@ -70,12 +95,5 @@ public class TokenManager {
                 .getBody();
     }
 
-
-    /**
-     * 从 token 获取用户名
-     */
-    public String getUsernameFromToken(String token) {
-        return getClaimsFromToken(token).getSubject();
-    }
 
 }
