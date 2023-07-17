@@ -26,5 +26,6 @@ mybatis:
   type-aliases-package: com.example.jwt.entity.*
 # jwt 配置
 jwt:
-  secret: 47a0951d-1968-4ba1-a1b7-53f5926dbdc5
+  pri-key: classpath:jwt-prikey.pem
+  pub-key: classpath:jwt-pubkey.pem
   token-validity: 43200000 # 3600 * 12 * 1000

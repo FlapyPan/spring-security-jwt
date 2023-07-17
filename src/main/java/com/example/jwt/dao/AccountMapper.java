@@ -10,6 +10,9 @@ import java.util.Optional;
 @Mapper
 public interface AccountMapper {
 
+    @Select("select * from t_account where id = #{id} limit 1")
+    Account findById(Long id);
+
     @Select("select * from t_account where username = #{username} limit 1")
     Optional<Account> findByUsername(String username);
 

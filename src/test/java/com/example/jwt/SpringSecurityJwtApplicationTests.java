@@ -8,7 +8,11 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 @SpringBootTest
-class SimpleMusicBackendApplicationTests {
+class SpringSecurityJwtApplicationTests {
+
+    @Test
+    void contextLoads() {
+    }
 
     @Autowired
     PasswordEncoder passwordEncoder;
@@ -17,16 +21,12 @@ class SimpleMusicBackendApplicationTests {
     AccountMapper accountMapper;
 
     @Test
-    void addDefaultUser() {
+    void insertDefaultAccount() {
         Account account = new Account();
         account.setUsername("admin");
         account.setPassword(passwordEncoder.encode("admin"));
         account.setRoles("USER,ADMIN");
         accountMapper.insert(account);
-    }
-
-    @Test
-    void contextLoads() {
     }
 
 }

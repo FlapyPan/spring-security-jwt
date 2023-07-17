@@ -1,25 +1,29 @@
 package com.example.jwt.security;
 
-import com.example.jwt.global.RestResult;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.nimbusds.jose.jwk.JWK;
+import com.nimbusds.jose.jwk.JWKSet;
+import com.nimbusds.jose.jwk.RSAKey;
+import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.oauth2.server.resource.OAuth2ResourceServerConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.oauth2.jwt.JwtEncoder;
+import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
+import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
+import java.security.interfaces.RSAPrivateKey;
+import java.security.interfaces.RSAPublicKey;
 
 /**
  * Spring Security 配置类
@@ -28,8 +32,6 @@ import java.nio.charset.StandardCharsets;
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
-
-    private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -40,36 +42,13 @@ public class SecurityConfig {
                 .cors().and()
                 // 关闭 session
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
+                // 开启 jwt token 验证
+                .oauth2ResourceServer(OAuth2ResourceServerConfigurer::jwt)
                 .authorizeRequests()
                 // 放行请求
                 .antMatchers("/api/auth/**").permitAll()
                 .anyRequest().authenticated().and()
-                // 添加 Jwt 认证过滤器
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
-                .exceptionHandling()
-                // 认证失败的处理
-                .authenticationEntryPoint((request, response, exception) ->
-                        writeFailureResponse(response, HttpStatus.UNAUTHORIZED, "请登录"))
-                // 授权失败的处理
-                .accessDeniedHandler((request, response, exception) ->
-                        writeFailureResponse(response, HttpStatus.FORBIDDEN, exception.getMessage()))
-                .and()
                 .build();
-    }
-
-    /**
-     * 将错误信息写入响应体
-     */
-    private void writeFailureResponse(HttpServletResponse response, HttpStatus httpStatus, String message) throws IOException {
-        // 设置 http 状态码
-        response.setStatus(httpStatus.value());
-        // 设置 utf8 编码
-        response.setCharacterEncoding(StandardCharsets.UTF_8.name());
-        // 类型 json
-        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-        ObjectMapper objectMapper = new ObjectMapper();
-        RestResult result = RestResult.failure(httpStatus.value(), message);
-        response.getWriter().write(objectMapper.writeValueAsString(result));
     }
 
     @Bean
@@ -84,5 +63,29 @@ public class SecurityConfig {
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();
     }
+
+    @Value("${jwt.pri-key}")
+    private RSAPrivateKey priKey;
+    @Value("${jwt.pub-key}")
+    private RSAPublicKey pubKey;
+
+    /**
+     * jwt 生成器
+     */
+    @Bean
+    public JwtEncoder jwtEncoder() {
+        JWK key = new RSAKey.Builder(pubKey).privateKey(priKey).build();
+        ImmutableJWKSet<com.nimbusds.jose.proc.SecurityContext> jwkSet = new ImmutableJWKSet<>(new JWKSet(key));
+        return new NimbusJwtEncoder(jwkSet);
+    }
+
+    /**
+     * jwt 解码器
+     */
+    @Bean
+    public JwtDecoder jwtDecoder() {
+        return NimbusJwtDecoder.withPublicKey(pubKey).build();
+    }
+
 
 }

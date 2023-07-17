@@ -23,4 +23,10 @@ public class AccountService implements UserDetailsService {
         return mapper.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("用户名不存在"));
     }
+
+    public Account findById(Long id) {
+        if (id == null || id <=0) return null;
+        return mapper.findById(id);
+    }
+
 }
