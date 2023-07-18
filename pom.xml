@@ -11,7 +11,7 @@
     <groupId>com.example.jwt</groupId>
     <artifactId>spring-security-jwt</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>simple-music-backend</name>
+    <name>spring-security-jwt</name>
     <description>spring-security-jwt</description>
     <properties>
         <java.version>11</java.version>
